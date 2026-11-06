@@ -1,0 +1,2 @@
+const sec=[['X-Frame-Options','DENY'],['X-Content-Type-Options','nosniff'],['Referrer-Policy','strict-origin-when-cross-origin'],['Strict-Transport-Security','max-age=63072000; includeSubDomains'],['Permissions-Policy','camera=(), microphone=(), geolocation=()']].map(([key,value])=>({key,value}));
+module.exports={experimental:{serverActions:{bodySizeLimit:'4mb'}},async headers(){return [{source:'/(.*)',headers:sec},{source:'/sw.js',headers:[{key:'Cache-Control',value:'no-cache'}]}]}};
