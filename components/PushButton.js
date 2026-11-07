@@ -1,26 +1,26 @@
 'use client';
 import { useEffect, useState } from 'react';
 const b64=s=>{const r=atob((s+'='.repeat((4-s.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));};
+const MSG={ios:'Sur iPhone : appuie sur « Partager » puis « Sur l\'écran d\'accueil », et ouvre le site depuis son icône pour activer les rappels.',denied:'Notifications bloquées : autorise-les pour ce site dans les réglages de ton navigateur.',on:'Les rappels sont activés sur cet appareil 🎀'};
 export default function PushButton(){
-  const [st,set]=useState('init');
+  const [st,set]=useState('init'),[tip,setTip]=useState(false);
   useEffect(()=>{
     const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),app=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
     if(ios&&!app)return set('ios');
     if(!('serviceWorker' in navigator)||!('PushManager' in window))return set('no');
-    set(Notification.permission==='granted'?'on':Notification.permission==='denied'?'denied':'off');
+    if(Notification.permission==='denied')return set('denied');
+    if(Notification.permission==='default')return set('off');
+    navigator.serviceWorker.getRegistration('/sw.js').then(async r=>set((await r?.pushManager.getSubscription())?'on':'off')).catch(()=>set('off'));
   },[]);
   async function on(){
     try{
       const reg=await navigator.serviceWorker.register('/sw.js');
       if(await Notification.requestPermission()!=='granted')return set('denied');
       const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)});
-      await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
-      set('on');
-    }catch{set('no');}
+      const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+      set(r.ok?'on':'off');
+    }catch{set('off');}
   }
-  if(st==='off')return <button className="btn" onClick={on}>🔔 Activer les rappels</button>;
-  if(st==='on')return <p className="ok">🔔 Rappels activés</p>;
-  if(st==='ios')return <p style={{fontSize:13}}>Pour recevoir les rappels sur iPhone : appuie sur <b>Partager</b> puis <b>Sur l'écran d'accueil</b>, et ouvre ce site depuis l'icône.</p>;
-  if(st==='denied')return <p style={{fontSize:13}}>Notifications bloquées : autorise-les dans les réglages du navigateur.</p>;
-  return null;
+  if(st==='init'||st==='no')return null;
+  return(<div className="pushw"><button type="button" className="bell" onClick={()=>st==='off'?on():setTip(t=>!t)}>🔔<span>{st==='on'?'Activé ✓':'Me prévenir'}</span></button>{tip&&MSG[st]&&<p className="pop">{MSG[st]}</p>}</div>);
 }

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { pub } from '@/lib/supabase';
 import { okToday, nextDay, today } from '@/lib/dispo';
 import Card from '@/components/Card';
-import PushButton from '@/components/PushButton';
 export const dynamic='force-dynamic';
 const ORDER=[1,2,3,4,5,6,0],J=['D','L','M','M','J','V','S'];
 export default async function Home({searchParams}){
@@ -17,7 +16,7 @@ export default async function Home({searchParams}){
       {spec.length>0&&<div className="panel">{spec.map(c=>{const n=nextDay(c.jours_dispo);return(
         <div key={c.id} className="prow"><div><b>{c.name}</b><small>{okToday(c.jours_dispo)?'Dispo aujourd\'hui !':`Prochaine dispo dans ${n.in} jour${n.in>1?'s':''}`}</small></div>
         <div className="dps">{ORDER.map(i=><i key={i} className={'dp'+(c.jours_dispo.includes(i)?' on':'')+(i===today()?' now':'')}>{J[i]}</i>)}</div></div>);})}
-        <PushButton/></div>}
+        </div>}
       <form id="creations" className="search"><input name="q" placeholder="Rechercher une création…" defaultValue={searchParams.q||''}/></form>
       <div className="chips"><Link href="/" className={'chip'+(cat?'':' on')}>Tout</Link>{cats.map(c=><Link key={c.id} href={`/?cat=${c.id}`} className={'chip'+(cat===c.id?' on':'')}>{c.name}</Link>)}</div>
       {list.length?<div className="grid">{list.map(p=><Card key={p.id} p={p} c={by[p.category_id]}/>)}</div>:<p>Aucune création pour l'instant. Reviens bientôt !</p>}
